@@ -450,13 +450,19 @@ class XmlHelper():
 def get_device_name_and_pin_objects():
     f = open(SOURCE_FILE)
     line = f.next()
-    device_name = line.split()[1]
-    line = f.next() # '/n'
+    if '--' in line: #New format file
+        line = f.next()
+        while '--' in line:
+            line = f.next()
+        device_name = SOURCE_FILE[:-7]
+    else: #Old format file
+        device_name = line.split()[1]
+        line = f.next() # '/n'
     line = f.next() # header
     all_pins = []
     for line in f:
         words = line.split()
-        if(len(words)>7):
+        if(len(words)>5):
             pin = words[0]
             pin_name = words[1]
             bank = words[3]
@@ -584,11 +590,8 @@ def print_banks(all_banks):
     for bank in all_banks:
         print(bank)
 
-SOURCE_FILE = '/home/bijan/Projects/Builder/XC7Z030-SBG485/xc7z030sbg485pkg.txt'
-OUTPUT_FILE = '/home/bijan/Projects/Builder/Pythons/result.xml'
-
 SOURCE_FILE = sys.argv[1]
-OUTPUT_FILE = '/home/bijan/Projects/Builder/Pythons/temp.xml'
+OUTPUT_FILE = 'temp.xml'
 RESULT_FILE = sys.argv[2]
 
 device_name,all_pins = get_device_name_and_pin_objects()
