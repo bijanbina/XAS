@@ -1,2 +1,4 @@
-*.txt
-result.xml
+*pkg.txt
+[0-9]*.xml
+env/
+__pycache__/
