@@ -353,11 +353,17 @@ def xas_split_header(line):
 # Remove '_T[0-9][UL], _AD[0-99][NP], _T[0-9], _N[0-99]' in pin_name
 # e.g. IO_L1P_AD11P_87 -> HD_L1P_87
 def xas_rename_io_pin(pin_name, words, headers):
+
+	result = re.sub('_AD\d{1,2}[NP]|_N\d{1,2}', '', pin_name)
+	if "IO_L" in result: # in case of 'IO_T' dont remove T[0-9][UL] or _T[0-9]
+		result = re.sub('_T[0-9][UL]|_T[0-9]', '', result)
+
 	for index,header in enumerate(headers):
 		if header == "I/O Type":
-			pin_name = pin_name.replace("IO", words[index])
+			result = result.replace("IO", words[index])
+			break
 
-	return re.sub('_T[0-9][UL]|_AD\d{1,2}[NP]|_T[0-9]|_N\d{1,2}', '', pin_name)
+	return result
 
 def xas_is_int(s):
     try: 
