@@ -1,6 +1,5 @@
 import math
-from lxml import etree as ET
-import lxml.builder as builder
+from xml_helper import *
 import os
 import sys
 
@@ -16,28 +15,6 @@ down_pin_names = ["GND"]
 
 ps_mode = False
 ps_banks = [500,501]
-
-
-PACKAGE = 'Package'
-LIB_PART = 'LibPart'
-DEFN = 'Defn'
-NORMAL_VIEW = 'NormalView'
-SYMBOL_DISPLAY_PROP = 'SymbolDisplayProp'
-SYMBOL_USER_PROP = 'SymbolUserProp'
-SYMBOL_COLOR = 'SymbolColor'
-SYMBOL_B_BOX = 'SymbolBBox'
-IS_PIN_NUMBERS_VISIBLE = 'IsPinNumbersVisible'
-IS_PIN_NAMES_ROTATED = 'IsPinNamesRotated'
-IS_PIN_NAMES_VISIBLE = 'IsPinNamesVisible'
-CONTENTS_LIB_NAME = 'ContentsLibName'
-CONTENTS_VIEW_NAME = 'ContentsLibName'
-CONTENTS_VIEW_TYPE = 'ContentsViewType'
-PART_VALUE = 'PartValue'
-REFERENCE = 'Reference'
-RECT = 'Rect'
-SYMBOL_PIN_SCALAR = 'SymbolPinScalar'
-PIN_NUMBER = 'PinNumber'
-PHYSICAL_PART = 'PhysicalPart'
 
 NO_DIRECTION = -1
 DOWN_DIRECTION = 0
@@ -225,7 +202,7 @@ class Bank():
         lp = ET.Element(LIB_PART)
         lp.append(ET.Element(DEFN))
 
-        pp = ET.Element(PHYSICAL_PART)
+        pp = ET.Element('PhysicalPart')
         pp.append(ET.Element(DEFN))
 
         nv = ET.Element(NORMAL_VIEW)
@@ -239,26 +216,26 @@ class Bank():
         r_locx = int(rect_size/2)
         r_locy = v_locy - 10
 
-        nv.append(XmlHelper.create_xml_symbol_diplay_prop(_locX=r_locx,_locY=r_locy,_name="Part Reference",_dispType=1))
-        nv.append(XmlHelper.create_xml_symbol_diplay_prop(_locX=v_locx,_locY=v_locy,_name="Value",_dispType=1))
-        nv.append(XmlHelper.create_xml_symbol_diplay_prop(_locX=pcb_locx,_locY=pcb_locy,_name="PCB Footprint",_dispType=0))
-        nv.append(XmlHelper.create_xml_symbol_user_prop("PCB Footprint",self.device_name))
-        nv.append(XmlHelper.create_xml_symbol_user_prop("Value",self.device_name))
-        nv.append(XmlHelper.create_xml_symbol_user_prop("Description",self.device_name))
-        nv.append(XmlHelper.create_xml_symbol_user_prop("Name",self.device_name))
-        nv.append(XmlHelper.create_xml_symbol_user_prop("SPLIT_INST","TRUE"))
-        nv.append(XmlHelper.create_xml_symbol_user_prop("SWAP_INFO","(S1+S2+S3+S4+S5+S6+S7)"))
-        nv.append(XmlHelper.create_xml_symbol_color(48))
-        nv.append(XmlHelper.create_xml_symbol_b_box(_x1=0,_x2=rect_size,_y1=0,_y2=rect_size))
-        nv.append(XmlHelper.create_xml_is_pin_numbers_visible(1))
-        nv.append(XmlHelper.create_xml_is_pin_names_rotated(1))
-        nv.append(XmlHelper.create_xml_is_pin_names_visible(1))
-        nv.append(XmlHelper.create_xml_contents_lib_name(""))
-        nv.append(XmlHelper.create_xml_contents_view_name(""))
-        nv.append(XmlHelper.create_xml_contents_view_type(0))
-        nv.append(XmlHelper.create_xml_part_value(self.device_name))
-        nv.append(XmlHelper.create_xml_reference("U"))
-        nv.append(XmlHelper.create_xml_rect(_x1=0,_x2=rect_size,_y1=0,_y2=rect_size))
+        nv.append(create_xml_symbol_diplay_prop(_locX=r_locx,_locY=r_locy,_name="Part Reference",_dispType=1))
+        nv.append(create_xml_symbol_diplay_prop(_locX=v_locx,_locY=v_locy,_name="Value",_dispType=1))
+        nv.append(create_xml_symbol_diplay_prop(_locX=pcb_locx,_locY=pcb_locy,_name="PCB Footprint",_dispType=0))
+        nv.append(create_xml_symbol_user_prop("PCB Footprint",self.device_name))
+        nv.append(create_xml_symbol_user_prop("Value",self.device_name))
+        nv.append(create_xml_symbol_user_prop("Description",self.device_name))
+        nv.append(create_xml_symbol_user_prop("Name",self.device_name))
+        nv.append(create_xml_symbol_user_prop("SPLIT_INST","TRUE"))
+        nv.append(create_xml_symbol_user_prop("SWAP_INFO","(S1+S2+S3+S4+S5+S6+S7)"))
+        nv.append(create_xml_symbol_color(48))
+        nv.append(create_xml_symbol_b_box(_x1=0,_x2=rect_size,_y1=0,_y2=rect_size))
+        nv.append(create_xml_is_pin_numbers_visible(1))
+        nv.append(create_xml_is_pin_names_rotated(1))
+        nv.append(create_xml_is_pin_names_visible(1))
+        nv.append(create_xml_contents_lib_name(""))
+        nv.append(create_xml_contents_view_name(""))
+        nv.append(create_xml_contents_view_type(0))
+        nv.append(create_xml_part_value(self.device_name))
+        nv.append(create_xml_reference("U"))
+        nv.append(create_xml_rect(_x1=0,_x2=rect_size,_y1=0,_y2=rect_size))
 
         for i,pin in enumerate(self.pin_up):
             pin_name = pin.get_pin_name()
@@ -268,9 +245,9 @@ class Bank():
             hotptY = startY - 30
             type_pin = 7
             position = i
-            nv.append(XmlHelper.create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+            nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
                                                                 _startX=startX,_startY=startY,_type=type_pin))
-            pp.append(XmlHelper.create_xml_pin_number(pin.get_pin(),position))
+            pp.append(create_xml_pin_number(pin.get_pin(),position))
         
         cnt = len(self.pin_up)
         for i,pin in enumerate(self.pin_down):
@@ -281,9 +258,9 @@ class Bank():
             hotptY = startY + 30
             type_pin = 7
             position = i + cnt
-            nv.append(XmlHelper.create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+            nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
                                                                 _startX=startX,_startY=startY,_type=type_pin))
-            pp.append(XmlHelper.create_xml_pin_number(pin.get_pin(),position))
+            pp.append(create_xml_pin_number(pin.get_pin(),position))
 
         cnt = len(self.pin_up) + len(self.pin_down)
         for i,pin in enumerate(self.pin_right):
@@ -294,9 +271,9 @@ class Bank():
             hotptY = startY
             type_pin = 1
             position = i + cnt
-            nv.append(XmlHelper.create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+            nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
                                                                 _startX=startX,_startY=startY,_type=type_pin))
-            pp.append(XmlHelper.create_xml_pin_number(pin.get_pin(),position))
+            pp.append(create_xml_pin_number(pin.get_pin(),position))
 
         cnt = len(self.pin_up) + len(self.pin_down) + len(self.pin_right)
         for i,pin in enumerate(self.pin_left):
@@ -307,9 +284,9 @@ class Bank():
             hotptY = startY
             type_pin = 1
             position = i + cnt
-            nv.append(XmlHelper.create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+            nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
                                                                 _startX=startX,_startY=startY,_type=type_pin))
-            pp.append(XmlHelper.create_xml_pin_number(pin.get_pin(),position))
+            pp.append(create_xml_pin_number(pin.get_pin(),position))
         
         lp.append(nv)
         lp.append(pp)
@@ -322,158 +299,6 @@ class Bank():
             s += pin.__str__()
             s += "\n"
         return s
-
-
-class XmlHelper():
-
-    @staticmethod
-    def create_package(device_name):
-        defn = ET.Element(DEFN,name=".OLB")
-        package = ET.Element(PACKAGE)
-        defn = ET.Element(DEFN,alphabeticNumbering="1", isHomogeneous="0", name=str(device_name), pcbFootprint="?", refdesPrefix="U")
-        package.append(defn)
-        return package
-
-    @staticmethod
-    def create_xml_symbol_diplay_prop(_locX,_locY,_name,_dispType):
-        sdp = ET.Element(SYMBOL_DISPLAY_PROP)
-        sdp.append(ET.Element(DEFN,locX=str(_locX),locY=str(_locY),name=str(_name),rotation=str(0)))
-
-        pf = ET.Element("PropFont")
-        pf.append(ET.Element(DEFN,escapement="0",height="7",italic="0",name="Arial",orientation="0",weight="400",width="4"))
-        sdp.append(pf)
-
-        pc = ET.Element("PropColor")
-        pc.append(ET.Element(DEFN,val="48"))
-        sdp.append(pc)
-
-        pdt = ET.Element("PropDispType")
-        pdt.append(ET.Element(DEFN,val=str(_dispType)))
-        sdp.append(pdt)
-
-        return sdp
-
-    @staticmethod
-    def create_xml_symbol_user_prop(_name,value):
-        sup = ET.Element(SYMBOL_USER_PROP)
-        sup.append(ET.Element(DEFN,name=str(_name),val=str(value)))
-        return sup
-
-    @staticmethod
-    def create_xml_symbol_b_box(_x1,_x2,_y1,_y2):
-        sbb = ET.Element(SYMBOL_B_BOX)
-        sbb.append(ET.Element(DEFN,x1=str(_x1),x2=str(_x2),y1=str(_y1),y2=str(_y2)))
-        return sbb
-
-    @staticmethod
-    def create_xml_symbol_color(color):
-        sc = ET.Element(SYMBOL_COLOR)
-        sc.append(ET.Element(DEFN,val=str(color)))
-        return sc
-
-    @staticmethod
-    def create_xml_is_pin_numbers_visible(value):
-        ipnv = ET.Element(IS_PIN_NUMBERS_VISIBLE)
-        ipnv.append(ET.Element(DEFN,val=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_is_pin_names_rotated(value):
-        ipnv = ET.Element(IS_PIN_NAMES_ROTATED)
-        ipnv.append(ET.Element(DEFN,val=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_is_pin_names_visible(value):
-        ipnv = ET.Element(IS_PIN_NAMES_VISIBLE)
-        ipnv.append(ET.Element(DEFN,val=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_contents_lib_name(value):
-        ipnv = ET.Element(CONTENTS_LIB_NAME)
-        ipnv.append(ET.Element(DEFN,name=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_contents_view_name(value):
-        ipnv = ET.Element(CONTENTS_VIEW_NAME)
-        ipnv.append(ET.Element(DEFN,name=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_contents_view_type(value):
-        ipnv = ET.Element(CONTENTS_VIEW_TYPE)
-        ipnv.append(ET.Element(DEFN,type=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_part_value(value):
-        ipnv = ET.Element(PART_VALUE)
-        ipnv.append(ET.Element(DEFN,name=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_reference(value):
-        ipnv = ET.Element(REFERENCE)
-        ipnv.append(ET.Element(DEFN,name=str(value)))
-        return ipnv
-
-    @staticmethod
-    def create_xml_rect(_x1,_x2,_y1,_y2):
-        rect = ET.Element(RECT)
-        rect.append(ET.Element(DEFN,fillStyle="1",hatchStyle="0",lineStyle="0",lineWidth="0",x1=str(_x1),x2=str(_x2),y1=str(_y1),y2=str(_y2)))
-        return rect
-
-    @staticmethod
-    def create_xml_symbol_pin_scalar(_hotptX,_hotptY,_name,_position,_startX,_startY,_type):
-        sps = ET.Element(SYMBOL_PIN_SCALAR)
-        sps.append( ET.Element(DEFN,hotptX=str(_hotptX),hotptY=str(_hotptY),name=str(_name),
-                    position=str(_position),startX=str(_startX),startY=str(_startY),type=str(_type),visible="1"))
-
-        il = ET.Element("IsLong")
-        il.append(ET.Element(DEFN,val="1"))
-        sps.append(il)
-
-        ic = ET.Element("IsClock")
-        ic.append(ET.Element(DEFN,val="0"))
-        sps.append(ic)
-
-        id = ET.Element("IsDot")
-        id.append(ET.Element(DEFN,val="0"))
-        sps.append(id)
-
-        ilp = ET.Element("IsLeftPointing")
-        ilp.append(ET.Element(DEFN,val="0"))
-        sps.append(ilp)
-
-        irp = ET.Element("IsRightPointing")
-        irp.append(ET.Element(DEFN,val="0"))
-        sps.append(ilp)
-
-        ins = ET.Element("IsNetStyle")
-        ins.append(ET.Element(DEFN,val="0"))
-        sps.append(ins)
-
-        inc = ET.Element("IsNoConnect")
-        inc.append(ET.Element(DEFN,val="0"))
-        sps.append(inc)
-
-        ig = ET.Element("IsGlobal")
-        ig.append(ET.Element(DEFN,val="0"))
-        sps.append(ig)
-
-        inv = ET.Element("IsNumberVisible")
-        inv.append(ET.Element(DEFN,val="1"))
-        sps.append(inv)
-
-        return sps
-
-    @staticmethod
-    def create_xml_pin_number(_number,_position):
-        pn = ET.Element(PIN_NUMBER)
-        pn.append(ET.Element(DEFN,number=str(_number),position=str(_position)))
-        return pn
 
 
 def get_device_name_and_pin_objects():
@@ -558,7 +383,7 @@ def update_bank_for_ps_mode(all_banks):
     return n_all_banks
 
 def create_output_file(device_name,all_banks):
-    package = XmlHelper.create_package(device_name)
+    package = create_package(device_name)
     n_all_banks = []
     if ps_mode:
         n_all_banks = update_bank_for_ps_mode(all_banks)
