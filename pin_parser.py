@@ -23,12 +23,13 @@ NORMAL_VIEW = 'NormalView'
 
 class PinObject():
 
-	def __init__(self, pin, pin_name, bank):
+	def __init__(self, pin, pin_name, bank, io_type):
 		self.pin = pin
 		self.pin_name = pin_name
 		self.bank = bank
 		if( bank!="NA" ):
 			self.bank = int(bank)
+		self.io_type = io_type
 		self.direction = NO_DIRECTION
 
 	def get_pin(self):
@@ -49,6 +50,12 @@ class PinObject():
 	def set_bank(self,bank):
 		self.bank = int(bank)
 
+	def get_io_type(self):
+		return self.io_type
+	
+	def set_io_type(self, io_type):
+		self.io_type = io_type
+
 	def get_direction(self):
 		return self.direction
 
@@ -68,7 +75,7 @@ class PinObject():
 		else:
 			dir = "NO_DIRECTION"
 
-		result = "%-10s %-20s %-10s %-20s" % (self.pin, self.pin_name, self.bank, dir)
+		result = "Pin:%-10s Pin name:%-20s Bank:%-10s I/O Type:%-10s Direction:%-20s" % (self.pin, self.pin_name, self.bank, self.io_type, dir)
 		return result
 
 class Bank():
@@ -156,23 +163,43 @@ class Bank():
 				self.pin_right.append(pin)
 		self.pin_right.reverse() # The order on the right side 
 								 # should be from descending to ascending(bottom to top)
+		
 		# Change order pins (N-P) (N pins above P pins)
 		cnt = 0
 		for ind in range(0, len(self.pin_left)):
+
 			if ind < cnt:
 				continue
+
 			if (ind+1) < len(self.pin_left):
-				pin_name1 = self.pin_left[ind].pin_name
-				pin_name2 = self.pin_left[ind+1].pin_name
-				special = False
-				for spn in special_pin_names:
-					if spn in pin_name1 or spn in pin_name2:
-						special = True
-						break
-				if special == False:
+				names = self.pin_left[ind].get_pin_name().split('_')
+				if len(names) > 1 and re.match("L\d{1,2}[NP]", names[1]):
 					self.pin_left[ind], self.pin_left[ind+1] = self.pin_left[ind+1], self.pin_left[ind] # Swap pins
 					cnt += 1
 			cnt += 1
+
+		# new_pin_left = []
+		# special_pins = []
+		# for pin in self.pin_left:
+		# 	if True in ( spn in pin.get_pin_name() for spn in special_pin_names):
+		# 		special_pins.append(pin)
+		# 		continue
+
+		# 	io_type_t = pin.get_io_type() + "_T"
+		# 	if io_type_t in pin.get_pin_name():
+		# 		special_pins.append(pin)
+		# 		continue
+		# 	new_pin_left.append(pin)
+
+		# new_pin_left.extend(special_pins)
+		# self.pin_left = new_pin_left
+		# print(len(new_pin_left), len(self.pin_left))
+
+		# Move special pins to end list 
+		self.pin_left.sort(key=lambda pin: [spn in pin.get_pin_name() for spn in special_pin_names])
+		self.pin_left.sort(key=lambda pin: pin.get_io_type() + "_T" in pin.get_pin_name())
+		self.pin_right.sort(key=lambda pin: pin.get_io_type() + "_T" in pin.get_pin_name())
+
 
 	def append_bank_number_to_pin_name(self):
 		for pin in self.pin_objects:
@@ -191,15 +218,25 @@ class Bank():
 					cnt += 1
 
 	def calculate_rect_size(self):
+		offset_left = 0
 		left_size = 0
 		for pin in self.pin_left:
 			if(left_size<len(pin.get_pin_name())):
 				left_size = len(pin.get_pin_name())
+			if True in ( spn in pin.get_pin_name() for spn in special_pin_names):
+				offset_left += 1
+			if pin.get_io_type() + "_T" in pin.get_pin_name():
+				offset_left += 1
 
+		offset_right = 0
 		right_size = 0
 		for pin in self.pin_right:
 			if(right_size<len(pin.get_pin_name())):
 				right_size = len(pin.get_pin_name())
+			if True in ( spn in pin.get_pin_name() for spn in special_pin_names):
+				offset_right += 1
+			if pin.get_io_type() + "_T" in pin.get_pin_name():
+				offset_right += 1
 
 		up_size = 0
 		for pin in self.pin_up:
@@ -213,7 +250,7 @@ class Bank():
 
 		# print(max(len(self.pin_down,self.pin_up))
 		width = max(len(self.pin_down),len(self.pin_up)) + (right_size + left_size)/2
-		height = max(len(self.pin_left),len(self.pin_right)) + (down_size + up_size)/2
+		height = max(len(self.pin_left),len(self.pin_right)) + (down_size + up_size)/2 + offset_right + offset_left
 		return max(width,height)
 
 	def create_xml(self):
@@ -283,11 +320,32 @@ class Bank():
 																_startX=startX,_startY=startY,_type=type_pin))
 			pp.append(create_xml_pin_number(pin.get_pin(),position))
 
+		offset_right = 0
+		for pin in self.pin_right:
+			if True in ( spn in pin.get_pin_name() for spn in special_pin_names):
+				offset_right += 1
+			if pin.get_io_type() + "_T" in pin.get_pin_name():
+				offset_right += 1
+		offset_left = 0
+		for pin in self.pin_left:
+			if True in ( spn in pin.get_pin_name() for spn in special_pin_names):
+				offset_left += 1
+			if pin.get_io_type() + "_T" in pin.get_pin_name():
+				offset_left += 1
+		
+		offset = min(offset_left, offset_right)
+
 		cnt = len(self.pin_up) + len(self.pin_down)
 		for i,pin in enumerate(self.pin_right):
 			pin_name = pin.get_pin_name()
 			startX = rect_size
-			startY = int((rect_size-len(self.pin_right)*10)/2 + 10*(i+1))
+
+			startY = int((rect_size-len(self.pin_right)*10)/2 + 10*(i+1 - offset))
+			if True in ( spn in pin_name for spn in special_pin_names):
+				startY += 30
+			if (pin.get_io_type() + "_T") in pin_name:
+				startY += 30
+
 			hotptX = startX + 30
 			hotptY = startY
 			type_pin = 1
@@ -296,11 +354,18 @@ class Bank():
 																_startX=startX,_startY=startY,_type=type_pin))
 			pp.append(create_xml_pin_number(pin.get_pin(),position))
 
+
 		cnt = len(self.pin_up) + len(self.pin_down) + len(self.pin_right)
 		for i,pin in enumerate(self.pin_left):
 			pin_name = pin.get_pin_name()
 			startX = 0
-			startY = int((rect_size-len(self.pin_left)*10)/2 + 10*(i+1))
+
+			startY = int((rect_size-len(self.pin_left)*10)/2 + 10*(i+1 - offset))
+			if True in ( spn in pin_name for spn in special_pin_names):
+				startY += 30
+			if (pin.get_io_type() + "_T") in pin_name:
+				startY += 30
+
 			hotptX = startX - 30
 			hotptY = startY
 			type_pin = 1
@@ -358,6 +423,7 @@ def xas_get_pin_objects(file):
 		pin_name = ""
 		pin = ""
 		bank = ""
+		io_type = ""
 		for index,header in enumerate(header_column):
 			if header == 'Pin Name':
 				pin_name = words[index]
@@ -367,7 +433,10 @@ def xas_get_pin_objects(file):
 				pin = words[index]
 			elif header == 'Bank':
 				bank = words[index]
-		all_pins.append(PinObject(pin,pin_name,bank))
+			elif header == "I/O Type":
+				io_type = words[index]
+
+		all_pins.append(PinObject(pin,pin_name,bank,io_type))
 	return all_pins, total_number_pins
 		
 def xas_split_header(line):

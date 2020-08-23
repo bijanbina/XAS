@@ -101,8 +101,6 @@ def print_pins(all_pins):
 	for pin in all_pins:
 		if pin.get_bank() == "NA":
 			print(pin)
-		# if(pin.get_bank()=="NA"):
-		#     print(pin)
 
 def print_banks(all_banks):
 	for bank in all_banks:
