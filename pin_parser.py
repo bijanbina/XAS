@@ -8,6 +8,8 @@ up_pin_names = ["VCC"]
 #The pins that contain this name and you want to be at the down of the schematic
 down_pin_names = ["GND"]
 
+special_pin_names = ["VREF"]
+
 NO_DIRECTION = -1
 DOWN_DIRECTION = 0
 UP_DIRECTION = 1
@@ -70,6 +72,7 @@ class PinObject():
 		return result
 
 class Bank():
+
 	def __init__(self, id, device_name):
 		self.id = id
 		self.device_name = device_name
@@ -113,6 +116,8 @@ class Bank():
 		self.set_up_down_left_right_pins()
 
 	def set_pin_direction(self):
+		self.pin_objects.reverse() # Because the pins are in ascending 
+								   # to descending order(IO)
 		cnt = 0
 		for pin in self.pin_objects:
 			pin_name = pin.get_pin_name()
@@ -124,6 +129,11 @@ class Bank():
 				if dpn in pin_name:
 					pin.set_direction(DOWN_DIRECTION)
 					cnt += 1
+			for spn in special_pin_names:
+				if spn in pin_name:
+					pin.set_direction(LEFT_DIRECTION)
+					cnt += 1
+
 		cnt1 = (len(self.pin_objects) - cnt)/2
 		for pin in self.pin_objects:
 			if(pin.get_direction()==NO_DIRECTION):
@@ -144,6 +154,25 @@ class Bank():
 				self.pin_left.append(pin)
 			elif(pin.get_direction()==RIGHT_DIRECTION):
 				self.pin_right.append(pin)
+		self.pin_right.reverse() # The order on the right side 
+								 # should be from descending to ascending(bottom to top)
+		# Change order pins (N-P) (N pins above P pins)
+		cnt = 0
+		for ind in range(0, len(self.pin_left)):
+			if ind < cnt:
+				continue
+			if (ind+1) < len(self.pin_left):
+				pin_name1 = self.pin_left[ind].pin_name
+				pin_name2 = self.pin_left[ind+1].pin_name
+				special = False
+				for spn in special_pin_names:
+					if spn in pin_name1 or spn in pin_name2:
+						special = True
+						break
+				if special == False:
+					self.pin_left[ind], self.pin_left[ind+1] = self.pin_left[ind+1], self.pin_left[ind] # Swap pins
+					cnt += 1
+			cnt += 1
 
 	def append_bank_number_to_pin_name(self):
 		for pin in self.pin_objects:

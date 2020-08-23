@@ -27,31 +27,6 @@ BANK_MGT_TYPE = "MGT"
 BANK_PS_TYPE = "PS"
 BANK_NR_TYPE = "NR" #Normal bank
 
-def get_device_name_and_pin_objects():
-	try:
-		file = open(SOURCE_FILE, 'r')
-		line = file.readline()
-		if '--' in line: #New format file
-			line = file.readline()
-			while '--' in line:
-				line = file.readline()
-			device_name = SOURCE_FILE[:-7]
-		else: #Old format file
-			device_name = line.split()[1]
-			line = file.readline() # '/n'
-		line = file.readline() # header
-		all_pins = []
-		for line in file:
-			words = line.split()
-			if(len(words)>5):
-				pin = words[0]
-				pin_name = words[1]
-				bank = words[3]
-				all_pins.append(PinObject(pin,pin_name,bank))
-		file.close()
-		return device_name,all_pins
-	except IOError:
-		print("Could not open file")
 
 def update_bank_for_mgt(all_pins, all_banks):
 	n_all_banks = []
@@ -137,8 +112,6 @@ SOURCE_FILE = sys.argv[1] # input pin file sourced from xilinx
 RESULT_FILE = sys.argv[2] # output xml filename
 OUTPUT_FILE = 'temp.xml'
 			
-# device_name,all_pins = get_device_name_and_pin_objects()
-
 try:
 	file = open(SOURCE_FILE, 'r')
 	device_name = xas_get_device_name(file)
@@ -152,7 +125,6 @@ try:
 	file.close()
 except IOError:
 	print("Could not open %s" % (SOURCE_FILE))
-
 
 nr_banks = set() #Normal banks
 mgt_banks = set() #MGT banks
