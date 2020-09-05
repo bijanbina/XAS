@@ -30,25 +30,27 @@ try:
 	file = open(SOURCE_FILE, 'r')
 	device_name = xas_get_device_name(file)
 	file.seek(0) # go back to the start of the file.
-	# all_pins, total_pins = xas_get_pin_objects(file)
-	# Check number of read pin with total pin number in source file
-	# if len(all_pins) != total_pins:
-	# 	print("number of pin object that read from source file is wrong")
-	# 	exit
-	
-	# print_pins(all_pins)
-
 	all_banks, total_pins = xas_get_bank_objects(file)
+	# Check number of read pin with total pin number in source file
+	if xas_get_total_pins(all_banks) != total_pins:
+		msg = "Error: Number of pin object that read from " + SOURCE_FILE + " file is wrong\r\n"
+		msg += "Total Pins: " + str(total_pins) + ", Total Read Pins: " + str(xas_get_total_pins(all_banks))
+		print(msg)
+		exit
 
 	file.close()
 except IOError:
 	print("Could not open %s" % (SOURCE_FILE))
 	exit
 
+# Append bank number to pin name and unify the names all pin in bank
+# and set direction to pins based on type bank
 for bank in all_banks:
 	bank.append_bank_number_to_pin_name()
 	bank.rename_pin_name()
 	bank.set_pins_direction()
+
+print_banks(all_banks)
 
 create_output_file(device_name,all_banks)
 os.system("./script.sh " + RESULT_FILE)

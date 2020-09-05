@@ -30,6 +30,7 @@ XAS_DDR_BANK  = "DDR"
 XAS_PS_BANK  = "PS"
 XAS_PSCONFIG_BANK  = "PSCONFIG"
 XAS_PLCONFIG_BANK  = "PLCONFIG"
+XAS_DATA_BANK = "DATA"
 
 
 class PinObject():
@@ -117,6 +118,9 @@ class Bank():
 	def add_pin(self,pin):
 		self.pin_objects.append(pin)
 
+	def extend_pins(self, pins):
+		self.pin_objects.extend(pins)
+
 	def get_pin_objects(self):
 		return self.pin_objects
 
@@ -164,32 +168,37 @@ class Bank():
 		# self.pin_right.sort(key=lambda pin: pin.get_io_type() + "_T" in pin.get_pin_name())
 
 	def set_up_down_left_right_pins(self):
+
 		cnt = 0
-		for pin in self.pin_objects:
-			pin_name = pin.get_pin_name()
 
-			#if pin name contain any word in 'up_pin_names'
-			if any(upn in pin_name for upn in up_pin_names):
-				pin.set_direction(UP_DIRECTION)
-				self.pin_up.append(pin)
-				cnt += 1
-				continue
+		if self.type == XAS_DATA_BANK:# Set direction when read from file
+			cnt = len(self.pin_objects)
+		else:
+			for pin in self.pin_objects:
+				pin_name = pin.get_pin_name()
 
-			#if pin name contain any word in 'down_pin_names'
-			if any(dpn in pin_name for dpn in down_pin_names):
-				pin.set_direction(DOWN_DIRECTION)
-				self.pin_down.append(pin)
-				cnt += 1
-				continue
+				#if pin name contain any word in 'up_pin_names'
+				if any(upn in pin_name for upn in up_pin_names):
+					pin.set_direction(UP_DIRECTION)
+					self.pin_up.append(pin)
+					cnt += 1
+					continue
 
-			# if is_set_direction:
-			# 	continue
-			# for spn in special_pin_names:
-			# 	if spn in pin_name:
-			# 		pin.set_direction(LEFT_DIRECTION)
-			# 		self.pin_left.append(pin)
-			# 		is_set_direction = True
-			# 		cnt += 1
+				#if pin name contain any word in 'down_pin_names'
+				if any(dpn in pin_name for dpn in down_pin_names):
+					pin.set_direction(DOWN_DIRECTION)
+					self.pin_down.append(pin)
+					cnt += 1
+					continue
+
+				# if is_set_direction:
+				# 	continue
+				# for spn in special_pin_names:
+				# 	if spn in pin_name:
+				# 		pin.set_direction(LEFT_DIRECTION)
+				# 		self.pin_left.append(pin)
+				# 		is_set_direction = True
+				# 		cnt += 1
 
 		#FIXME: for based on bank numbers
 		#right and left pins for HP and HR banks
@@ -245,23 +254,23 @@ class Bank():
 					for i in range(0, num_clk_pin/2): # /2 for left,right
 						# add differential clock pins to left
 						d_pin_name = "CLK" + str(i) + "P"
-						p_clk = self.get_desired_pin(d_pin_name, num_bank)
+						p_clk = self.get_desired_pin([d_pin_name], num_bank)
 						p_clk.set_direction(LEFT_DIRECTION)
 						self.pin_left.append(p_clk)
 
 						d_pin_name = "CLK" + str(i) + "N"
-						n_clk = self.get_desired_pin(d_pin_name, num_bank)
+						n_clk = self.get_desired_pin([d_pin_name], num_bank)
 						n_clk.set_direction(LEFT_DIRECTION)
 						self.pin_left.append(n_clk)
 
 						# add differential clock pins to right
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "P"
-						p_clk = self.get_desired_pin(d_pin_name, num_bank)
+						p_clk = self.get_desired_pin([d_pin_name], num_bank)
 						p_clk.set_direction(RIGHT_DIRECTION)
 						self.pin_right.append(p_clk)
 
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "N"
-						n_clk = self.get_desired_pin(d_pin_name, num_bank)
+						n_clk = self.get_desired_pin([d_pin_name], num_bank)
 						n_clk.set_direction(RIGHT_DIRECTION)
 						self.pin_right.append(n_clk)
 
@@ -298,23 +307,23 @@ class Bank():
 					for i in range(0, num_clk_pin/2): # /2 for left,right 
 						# add differential clock pins to left
 						d_pin_name = "CLK" + str(i) + "P"
-						p_clk = self.get_desired_pin(d_pin_name, num_bank)
+						p_clk = self.get_desired_pin([d_pin_name], num_bank)
 						p_clk.set_direction(LEFT_DIRECTION)
 						self.pin_left.append(p_clk)
 
 						d_pin_name = "CLK" + str(i) + "N"
-						n_clk = self.get_desired_pin(d_pin_name, num_bank)
+						n_clk = self.get_desired_pin([d_pin_name], num_bank)
 						n_clk.set_direction(LEFT_DIRECTION)
 						self.pin_left.append(n_clk)
 
 						# add differential clock pins to right
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "P"
-						p_clk = self.get_desired_pin(d_pin_name, num_bank)
+						p_clk = self.get_desired_pin([d_pin_name], num_bank)
 						p_clk.set_direction(RIGHT_DIRECTION)
 						self.pin_right.append(p_clk)
 
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "N"
-						n_clk = self.get_desired_pin(d_pin_name, num_bank)
+						n_clk = self.get_desired_pin([d_pin_name], num_bank)
 						n_clk.set_direction(RIGHT_DIRECTION)
 						self.pin_right.append(n_clk)
 
@@ -353,6 +362,56 @@ class Bank():
 					pin.set_direction(RIGHT_DIRECTION)
 					self.pin_right.append(pin)
 
+	def add_pin_to_left(self, pins):
+		for pin in pins:
+			pin.set_direction(LEFT_DIRECTION)
+			self.pin_objects.append(pin)
+			self.pin_left.append(pin)
+
+	def add_pin_to_right(self, pins):
+		for pin in pins:
+			pin.set_direction(RIGHT_DIRECTION)
+			self.pin_objects.append(pin)
+			self.pin_right.append(pin)
+
+	def add_pin_to_up(self, pins):
+		for pin in pins:
+			pin.set_direction(UP_DIRECTION)
+			self.pin_objects.append(pin)
+			self.pin_up.append(pin)
+
+	def add_pin_to_down(self, pins):
+		for pin in pins:
+			pin.set_direction(DOWN_DIRECTION)
+			self.pin_objects.append(pin)
+			self.pin_down.append(pin)
+
+	# @num: byte lane number(0,1,2,...,7)
+	# @return: list of pins inside a byte lane
+	#		   and pop from pin_objects
+	def get_byte_lane(self, num):
+		pins = []
+		# DQ pins
+		for i in range(0,8):
+			d_pin_name = "DQ" + str(i+num*8)
+			pin = self.get_desired_pin_with_pop([d_pin_name], self.numbers[0]) #FIXME: bank number
+			pins.append(pin)
+		
+		# DQS{num}{P-N} pins
+		d_pin_name = "DQS_" + "P" + str(num)
+		p_pin = self.get_desired_pin_with_pop([d_pin_name], self.numbers[0])#FIXME: bank number
+		pins.append(p_pin)
+		d_pin_name = "DQS_" + "N" + str(num)
+		n_pin = self.get_desired_pin_with_pop([d_pin_name], self.numbers[0])#FIXME: bank number
+		pins.append(n_pin)
+
+		# DM{num} pin
+		d_pin_name = "DM" + str(num)
+		pin = self.get_desired_pin_with_pop([d_pin_name], self.numbers[0])#FIXME: bank number
+		pins.append(pin)
+
+		return pins
+			
 	# @num_bank: pin in desired bank number
 	# @return: minimum number in mio pins
 	def get_min_number_mio_pins(self, num_bank):
@@ -380,15 +439,26 @@ class Bank():
 				cnt += 1
 		return cnt
 
-	# @d_pin_name: desired pin name
+	# @d_pin_name: list of desired pin names
 	# @num_bank: pin in desired bank number
 	# @return: if find desired pin with d_pin_name and num_bank
 	#		   otherwise return None
-	def get_desired_pin(self, d_pin_name, num_bank):
+	def get_desired_pin(self, d_pin_names, num_bank):
 		cnt = 0
 		for pin in self.pin_objects:
-			if d_pin_name in pin.get_pin_name() and num_bank == pin.get_bank_number():
+			if any(name in pin.get_pin_name() for name in d_pin_names) and num_bank == pin.get_bank_number():
 				return pin
+
+	# @d_pin_name: list of desired pin names
+	# @num_bank: pin in desired bank number
+	# @return: if find desired pin with d_pin_name and num_bank
+	#		   and pop from pin_objects
+	#		   otherwise return None
+	def get_desired_pin_with_pop(self, d_pin_names, num_bank):
+		cnt = 0
+		for index,pin in enumerate(self.pin_objects):
+			if any(name in pin.get_pin_name() for name in d_pin_names) and num_bank == pin.get_bank_number():
+				return self.pin_objects.pop(index)
 
 	# Note: Call this function if type bank is (HP or HR)
 	# @d_pin_name: desired pin name
@@ -450,12 +520,13 @@ class Bank():
 				return pin
 	
 	def append_bank_number_to_pin_name(self):
-		for pin in self.pin_objects:
-			pin_name = pin.get_pin_name()
-			bn = pin_name.split('_')[-1] # get last word from pin_name
-			if bn.isdigit() == False or int(bn) not in self.numbers :
-				#FIXME: which bank number append to pin name if we have two bank(capacity = 2)
-				pin.set_pin_name(pin_name + "_" + str(self.numbers[0])) # assign first bank number to pins
+		if self.numbers[0] != "NA":
+			for pin in self.pin_objects:
+				pin_name = pin.get_pin_name()
+				bn = pin_name.split('_')[-1] # get last word from pin_name
+				if bn.isdigit() == False or int(bn) not in self.numbers :
+					#FIXME: which bank number append to pin name if we have two bank(capacity = 2)
+					pin.set_pin_name(pin_name + "_" + str(self.numbers[0])) # assign first bank number to pins
 
 	# add index to pin_name if equals with another pin_name
 	def rename_pin_name(self):
@@ -709,14 +780,11 @@ def xas_get_bank_objects(file):
 
 		pin_is_assigned = False
 		for bank in all_banks:
-			if pin_is_assigned == True:
+			if any([bank_number in bank.get_bank_numbers()]):
+				bank.add_pin(pin_object)
+				pin_is_assigned = True
 				break
-			for bnk_id in bank.get_bank_numbers():
-				if bnk_id == bank_number:
-					bank.add_pin(pin_object)
-					pin_is_assigned = True
-					break
-		
+
 		if pin_is_assigned:
 			continue
 		else:
@@ -831,6 +899,28 @@ def xas_get_bank_objects(file):
 		ddrv_in_bank = int(math.ceil(float(len(bankless_ddr_pins))/len(ddr_banks))) # number of DDRV pins assigned to DDR bank
 		for i in range(0, len(bankless_ddr_pins)):
 			ddr_banks[i/ddrv_in_bank].add_pin(bankless_ddr_pins[i])
+		
+		# Create new DDR bank based on byte lane if number of pins more than 70 
+		for bank in ddr_banks:
+			if len(bank.get_pin_objects()) > 70:
+				pins = []
+				data_bank = Bank(XAS_DATA_BANK, 0)
+				data_bank.add_bank_number("NA")
+				num_byte_lane = bank.get_num_desired_pins(["DQS"], bank.numbers[0])/2 #FIXME: bank number
+																					  #/2 for P,N
+				byte_lane_in_each_direction = int(num_byte_lane/4)
+				for i in range(0,num_byte_lane):
+					pins = bank.get_byte_lane(i)
+					if i < byte_lane_in_each_direction:
+						data_bank.add_pin_to_left(pins)
+					elif i< 2*byte_lane_in_each_direction:
+						data_bank.add_pin_to_down(pins)
+					elif i< 3*byte_lane_in_each_direction:
+						data_bank.add_pin_to_right(pins)
+					else:
+						data_bank.add_pin_to_up(pins)
+					
+				all_banks.append(data_bank)
 
 	# Assign PSV pins to PS banks
 	if len(ps_banks) != 0: # Check have PS banks or not
@@ -864,9 +954,11 @@ def xas_rename_io_pin(pin_name, words, headers):
 
 	return result
 
-# def xas_is_int(s):
-#     try: 
-#         int(s)
-#         return True
-#     except ValueError:
-#         return False
+# @all_banks: list of bank
+# @return: total number of pins in all_banks
+def xas_get_total_pins(all_banks):
+	cnt = 0
+	for bank in all_banks:
+		cnt += len(bank.get_pin_objects())
+	return cnt
+
