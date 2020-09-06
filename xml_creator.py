@@ -50,7 +50,7 @@ for bank in all_banks:
 	bank.rename_pin_name()
 	bank.set_pins_direction()
 
-print_banks(all_banks)
+# print_banks(all_banks)
 
 create_output_file(device_name,all_banks)
 os.system("./script.sh " + RESULT_FILE)

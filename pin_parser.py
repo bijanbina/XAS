@@ -118,61 +118,18 @@ class Bank():
 	def add_pin(self,pin):
 		self.pin_objects.append(pin)
 
-	def extend_pins(self, pins):
-		self.pin_objects.extend(pins)
-
 	def get_pin_objects(self):
 		return self.pin_objects
 
 	def set_pins_direction(self):
-
 		self.set_up_down_left_right_pins()
-
-		# self.pin_right.reverse() # The order on the right side 
-		# 						 # should be from descending to ascending(bottom to top)
-		
-		# # Change order pins (N-P) (N pins above P pins)
-		# cnt = 0
-		# for ind in range(0, len(self.pin_left)):
-
-		# 	if ind < cnt:
-		# 		continue
-
-		# 	if (ind+1) < len(self.pin_left):
-		# 		names = self.pin_left[ind].get_pin_name().split('_')
-		# 		if len(names) > 1 and re.match("L\d{1,2}[NP]", names[1]):
-		# 			self.pin_left[ind], self.pin_left[ind+1] = self.pin_left[ind+1], self.pin_left[ind] # Swap pins
-		# 			cnt += 1
-		# 	cnt += 1
-
-		# new_pin_left = []
-		# special_pins = []
-		# for pin in self.pin_left:
-		# 	if True in ( spn in pin.get_pin_name() for spn in special_pin_names):
-		# 		special_pins.append(pin)
-		# 		continue
-
-		# 	io_type_t = pin.get_io_type() + "_T"
-		# 	if io_type_t in pin.get_pin_name():
-		# 		special_pins.append(pin)
-		# 		continue
-		# 	new_pin_left.append(pin)
-
-		# new_pin_left.extend(special_pins)
-		# self.pin_left = new_pin_left
-		# print(len(new_pin_left), len(self.pin_left))
-
-		# Move special pins to end list 
-		# self.pin_left.sort(key=lambda pin: [spn in pin.get_pin_name() for spn in special_pin_names])
-		# self.pin_left.sort(key=lambda pin: pin.get_io_type() + "_T" in pin.get_pin_name())
-		# self.pin_right.sort(key=lambda pin: pin.get_io_type() + "_T" in pin.get_pin_name())
 
 	def set_up_down_left_right_pins(self):
 
-		cnt = 0
+		num_pin_assigned_direction = 0 # the number of pins that assigned them direction
 
-		if self.type == XAS_DATA_BANK:# Set direction when read from file
-			cnt = len(self.pin_objects)
+		if self.type == XAS_DATA_BANK:# Direction for DATA bank is set when read from file
+			num_pin_assigned_direction = len(self.pin_objects) # all pins set directions
 		else:
 			for pin in self.pin_objects:
 				pin_name = pin.get_pin_name()
@@ -181,60 +138,51 @@ class Bank():
 				if any(upn in pin_name for upn in up_pin_names):
 					pin.set_direction(UP_DIRECTION)
 					self.pin_up.append(pin)
-					cnt += 1
+					num_pin_assigned_direction += 1
 					continue
 
 				#if pin name contain any word in 'down_pin_names'
 				if any(dpn in pin_name for dpn in down_pin_names):
 					pin.set_direction(DOWN_DIRECTION)
 					self.pin_down.append(pin)
-					cnt += 1
+					num_pin_assigned_direction += 1
 					continue
-
-				# if is_set_direction:
-				# 	continue
-				# for spn in special_pin_names:
-				# 	if spn in pin_name:
-				# 		pin.set_direction(LEFT_DIRECTION)
-				# 		self.pin_left.append(pin)
-				# 		is_set_direction = True
-				# 		cnt += 1
 
 		#FIXME: for based on bank numbers
 		#right and left pins for HP and HR banks
 		if self.type == XAS_HR_BANK or self.type == XAS_HP_BANK:
 			num_diff_pin = self.get_num_pin_io(is_diff=True)/2 # /2 for N,P
-			for i in range(0,num_diff_pin/2):# /2 for left, right
+			for i in range(0,num_diff_pin/2):# /2 for left,right
 
 				# add differential pins to left
 				d_pin_name = "L" + str(i+1) + "P" # desired pin name
-				p_pin = self.get_pin_io(d_pin_name)#FIXME: use get_desired_pin()
+				p_pin = self.get_pin_io(d_pin_name)#FIXME: change get_pin_io with get_desired_pin
 				p_pin.set_direction(LEFT_DIRECTION)
 				self.pin_left.append(p_pin)
 
 				d_pin_name = "L" + str(i+1) + "N" # desired pin name
-				n_pin = self.get_pin_io(d_pin_name)#FIXME: use get_desired_pin()
+				n_pin = self.get_pin_io(d_pin_name)
 				n_pin.set_direction(LEFT_DIRECTION)
 				self.pin_left.append(n_pin)
 
 				# add differential pins to right
 				d_pin_name = "L" + str(num_diff_pin - i) + "P" # desired pin name
-				p_pin = self.get_pin_io(d_pin_name)#FIXME: use get_desired_pin()
+				p_pin = self.get_pin_io(d_pin_name)
 				p_pin.set_direction(RIGHT_DIRECTION)
-				self.pin_right.append(p_pin)
+				self.pin_right.insert(0, p_pin)
 
-				d_pin_name = "L" + str(num_diff_pin - i) + "N" # desired pin name
-				n_pin = self.get_pin_io(d_pin_name)#FIXME: use get_desired_pin()
+				d_pin_name = "L" + str(num_diff_pin - i ) + "N" # desired pin name
+				n_pin = self.get_pin_io(d_pin_name)
 				n_pin.set_direction(RIGHT_DIRECTION)
-				self.pin_right.append(n_pin)
+				self.pin_right.insert(0, n_pin)
 
-				cnt += 4
+				num_pin_assigned_direction += 4
 
 			num_single_ended_pin = self.get_num_pin_io(False)
 			for i in range(0, num_single_ended_pin/2):
 				# add single ended pins to left
 				d_pin_name = "T" + str(i) + "U" # desired pin name
-				pin_l = self.get_pin_io(d_pin_name)
+				pin_l = self.get_pin_io(d_pin_name)#FIXME: change get_pin_io with get_desired_pin
 				pin_l.set_direction(LEFT_DIRECTION)
 				self.pin_left.append(pin_l)
 
@@ -242,15 +190,17 @@ class Bank():
 				d_pin_name = "T" + str(num_single_ended_pin - i - 1) + "U" # desired pin name
 				pin_r = self.get_pin_io(d_pin_name)
 				pin_r.set_direction(RIGHT_DIRECTION)
-				self.pin_right.append(pin_r)
+				self.pin_right.insert(0, pin_r)
+
+				num_pin_assigned_direction += 2
 
 		#right and left pins for MGT and PS_MGT banks that must be differential
 		if self.type == XAS_MGT_BANK or self.type == XAS_PSMGT_BANK:
 			for index,num_bank in enumerate(self.numbers):
 				num_clk_pin = self.get_num_desired_pins(["CLK"], num_bank)/2 # /2 for N,P
-
-				#FIXME: if first bank number set to up pin_left, pin_right
-				if index%2 == 0:
+				
+				# First bank number, pins insert the beginning pin_left, pin_right
+				if index == 0:
 					for i in range(0, num_clk_pin/2): # /2 for left,right
 						# add differential clock pins to left
 						d_pin_name = "CLK" + str(i) + "P"
@@ -267,43 +217,43 @@ class Bank():
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "P"
 						p_clk = self.get_desired_pin([d_pin_name], num_bank)
 						p_clk.set_direction(RIGHT_DIRECTION)
-						self.pin_right.append(p_clk)
+						self.pin_right.insert(0, p_clk)
 
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "N"
 						n_clk = self.get_desired_pin([d_pin_name], num_bank)
 						n_clk.set_direction(RIGHT_DIRECTION)
-						self.pin_right.append(n_clk)
+						self.pin_right.insert(0 ,n_clk)
 
-						cnt += 4
+						num_pin_assigned_direction += 4
 
-				num_diff_pin = self.get_num_diff_pin_mgt(num_bank)/2 # /2 for N,P
+				num_diff_pin = self.get_num_desired_pins(["RX", "TX"],num_bank)/2 # /2 for N,P
 				for i in range(0, num_diff_pin/2): # /2 for RX,TX
 					# add differential pins to left
 					d_pin_name = "RX" + "P" + str(i) # desired pin name
-					p_pin = self.get_diff_pin_mgt(d_pin_name, num_bank)
+					p_pin = self.get_desired_pin([d_pin_name], num_bank)
 					p_pin.set_direction(LEFT_DIRECTION)
 					self.pin_left.append(p_pin)
 
 					d_pin_name = "RX" + "N" + str(i) # desired pin name
-					n_pin = self.get_diff_pin_mgt(d_pin_name, num_bank)
+					n_pin = self.get_desired_pin([d_pin_name], num_bank)
 					n_pin.set_direction(LEFT_DIRECTION)
 					self.pin_left.append(n_pin)
 
 					# add differential pins to right
 					d_pin_name = "TX" + "P" + str(i) # desired pin name
-					p_pin = self.get_diff_pin_mgt(d_pin_name, num_bank)
+					p_pin = self.get_desired_pin([d_pin_name], num_bank)
 					p_pin.set_direction(RIGHT_DIRECTION)
-					self.pin_right.append(p_pin)
-					
-					d_pin_name = "TX" + "N" + str(i) # desired pin name
-					n_pin = self.get_diff_pin_mgt(d_pin_name, num_bank)
-					n_pin.set_direction(RIGHT_DIRECTION)
-					self.pin_right.append(n_pin)
+					self.pin_right.insert(0, p_pin)
 
-					cnt += 4
+					d_pin_name = "TX" + "N" + str(i) # desired pin name
+					n_pin = self.get_desired_pin([d_pin_name], num_bank)
+					n_pin.set_direction(RIGHT_DIRECTION)
+					self.pin_right.insert(0, n_pin)
+					
+					num_pin_assigned_direction += 4
 				
-				#FIXME: if first bank number set to up pin_left, pin_right				
-				if index%2 == 1:
+				# Second bank number, pins append to end pin_left, pin_right				
+				if index == 1:
 					for i in range(0, num_clk_pin/2): # /2 for left,right 
 						# add differential clock pins to left
 						d_pin_name = "CLK" + str(i) + "P"
@@ -320,14 +270,14 @@ class Bank():
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "P"
 						p_clk = self.get_desired_pin([d_pin_name], num_bank)
 						p_clk.set_direction(RIGHT_DIRECTION)
-						self.pin_right.append(p_clk)
+						self.pin_right.insert(0, p_clk)
 
 						d_pin_name = "CLK" + str(num_clk_pin-i-1) + "N"
 						n_clk = self.get_desired_pin([d_pin_name], num_bank)
 						n_clk.set_direction(RIGHT_DIRECTION)
-						self.pin_right.append(n_clk)
+						self.pin_right.insert(0, n_clk)
 
-						cnt += 4
+						num_pin_assigned_direction += 4
 
 		#right and left pins for PS banks
 		if self.type == XAS_PS_BANK:
@@ -338,29 +288,40 @@ class Bank():
 				for i in range(0, num_mio_pins/2): # /2 for left,right
 					# add differential pins to left
 					d_pin_name = "MIO" + str(start_number + i) # desired pin name
-					l_pin = self.get_diff_pin_mgt(d_pin_name, num_bank)
+					l_pin = self.get_desired_pin([d_pin_name], num_bank)
 					l_pin.set_direction(LEFT_DIRECTION)
 					self.pin_left.append(l_pin)
 
 					# add differential pins to right
 					d_pin_name = "MIO" + str(end_number-i-1) # desired pin name
-					r_pin = self.get_diff_pin_mgt(d_pin_name, num_bank)
+					r_pin = self.get_desired_pin([d_pin_name], num_bank)
 					r_pin.set_direction(RIGHT_DIRECTION)
-					self.pin_right.append(r_pin)
+					self.pin_right.insert(0, r_pin)
 
-					cnt += 2
+					num_pin_assigned_direction += 2
+
+		#right and left pins for DDR banks
+		if self.type == XAS_DDR_BANK:
+			num_ddr_add = self.get_num_ddr_address_pins() # number of ddr address pins
+			for i in range(0, num_ddr_add):
+				d_pin_name = "PS_DDR_A" + str(i) + "_" 
+				add_pin = self.get_desired_pin([d_pin_name], self.numbers[0])#FIXME: bank number
+				add_pin.set_direction(LEFT_DIRECTION)
+				self.pin_left.append(add_pin)
+
 
 		# set direction for remind pins
-		cnt1 = (len(self.pin_objects) - cnt)/2
+		cnt1 = (len(self.pin_objects) - num_pin_assigned_direction)/2
 		for pin in self.pin_objects:
 			if(pin.get_direction()==NO_DIRECTION):
 				if(cnt1>0):
-					pin.set_direction(LEFT_DIRECTION)
-					self.pin_left.append(pin)
+					pin.set_direction(RIGHT_DIRECTION)
+					self.pin_right.insert(0, pin)
 					cnt1 -= 1
 				else:
-					pin.set_direction(RIGHT_DIRECTION)
-					self.pin_right.append(pin)
+					pin.set_direction(LEFT_DIRECTION)
+					self.pin_left.append(pin)
+					
 
 	def add_pin_to_left(self, pins):
 		for pin in pins:
@@ -386,10 +347,11 @@ class Bank():
 			self.pin_objects.append(pin)
 			self.pin_down.append(pin)
 
-	# @num: byte lane number(0,1,2,...,7)
+	# @num: byte lane number(0,1,2,...)
+	# @change_diff_order_pin: change order P-N in return byte lane. (True,False)
 	# @return: list of pins inside a byte lane
 	#		   and pop from pin_objects
-	def get_byte_lane(self, num):
+	def get_byte_lane(self, num, change_diff_order_pin):
 		pins = []
 		# DQ pins
 		for i in range(0,8):
@@ -400,10 +362,15 @@ class Bank():
 		# DQS{num}{P-N} pins
 		d_pin_name = "DQS_" + "P" + str(num)
 		p_pin = self.get_desired_pin_with_pop([d_pin_name], self.numbers[0])#FIXME: bank number
-		pins.append(p_pin)
 		d_pin_name = "DQS_" + "N" + str(num)
 		n_pin = self.get_desired_pin_with_pop([d_pin_name], self.numbers[0])#FIXME: bank number
-		pins.append(n_pin)
+
+		if change_diff_order_pin:
+			pins.append(n_pin)
+			pins.append(p_pin)
+		else:
+			pins.append(p_pin)
+			pins.append(n_pin)
 
 		# DM{num} pin
 		d_pin_name = "DM" + str(num)
@@ -424,9 +391,22 @@ class Bank():
 					if "MIO" in s_pin_name:
 						number = int(s_pin_name[3:len(s_pin_name)]) # MIO{0-90-9...}
 						if number < min_number:
-							min_number = int(number)
+							min_number = number
 							break
 		return min_number
+
+	# @return: number of ddr address pins
+	def get_num_ddr_address_pins(self):
+		cnt = 0
+		for pin in self.pin_objects:
+			pin_name = pin.get_pin_name()
+			if "PS_DDR_A" in pin_name:
+				split_pin_name = pin_name.split("_")
+				add_name = split_pin_name[2] #FIXME: Assume the struct of the pin name for address as "PS_DDR_A{0-9}"
+				add_num = add_name[1:len(add_name)]
+				if add_num.isdigit():
+					cnt += 1
+		return cnt
 
 	# @d_pin_name: list of desired pin names
 	# @num_bank: pin in desired bank number
@@ -444,7 +424,6 @@ class Bank():
 	# @return: if find desired pin with d_pin_name and num_bank
 	#		   otherwise return None
 	def get_desired_pin(self, d_pin_names, num_bank):
-		cnt = 0
 		for pin in self.pin_objects:
 			if any(name in pin.get_pin_name() for name in d_pin_names) and num_bank == pin.get_bank_number():
 				return pin
@@ -496,29 +475,6 @@ class Bank():
 						num += 1
 		return num
 
-	#FIXME:if type bank not be MGT or PS_MGT
-	# Note: Call this function if type bank is (MGT or PS_MGT)
-	# @num_bank: count pins in desired bank number
-	# @return: number of differential pins(P,N) in MGT and PS_MGT banks for RX and TX
-	def get_num_diff_pin_mgt(self, num_bank):
-		num = 0
-		for pin in self.pin_objects:
-			if pin.get_bank_number() == num_bank:
-				if "RX" in pin.get_pin_name() or "TX" in pin.get_pin_name():
-					num += 1
-		return num
-
-		# Note: Call this function if type bank is (HP or HR)
-	
-	# @d_pin_name: desired pin name
-	# @num_bank: pin in desired bank number
-	# @return: if find desired pin with d_pin_name and num_bank
-	#		   otherwise return None
-	def get_diff_pin_mgt(self, d_pin_name, num_bank):
-		for pin in self.pin_objects:
-			if d_pin_name in pin.get_pin_name() and num_bank == pin.get_bank_number():
-				return pin
-	
 	def append_bank_number_to_pin_name(self):
 		if self.numbers[0] != "NA":
 			for pin in self.pin_objects:
@@ -617,14 +573,14 @@ class Bank():
 
 		for i,pin in enumerate(self.pin_up):
 			pin_name = pin.get_pin_name()
-			startX = int((rect_size-len(self.pin_up)*10)/2 + 10*(i+1))
+			startX = int(rect_size - (rect_size-len(self.pin_up)*10)/2 - 10*(i+1))
 			startY = 0
 			hotptX = startX
 			hotptY = startY - 30
 			type_pin = 7
 			position = i
-			nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
-																_startX=startX,_startY=startY,_type=type_pin))
+			nv.append(create_xml_symbol_pin_scalar(_hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+												   _startX=startX,_startY=startY,_type=type_pin))
 			pp.append(create_xml_pin_number(pin.get_pin(),position))
 		
 		cnt = len(self.pin_up)
@@ -636,8 +592,8 @@ class Bank():
 			hotptY = startY + 30
 			type_pin = 7
 			position = i + cnt
-			nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
-																_startX=startX,_startY=startY,_type=type_pin))
+			nv.append(create_xml_symbol_pin_scalar(_hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+												   _startX=startX,_startY=startY,_type=type_pin))
 			pp.append(create_xml_pin_number(pin.get_pin(),position))
 
 		offset_right = 0
@@ -661,18 +617,18 @@ class Bank():
 			pin_name = pin.get_pin_name()
 			startX = rect_size
 
-			startY = int((rect_size-len(self.pin_right)*10)/2 + 10*(i+1 - offset))
+			startY = int(rect_size - (rect_size-len(self.pin_right)*10)/2 - 10*(i+1 + offset))
 			if any(spn in pin_name for spn in special_pin_names):
-				startY += 30
+				startY += 10
 			if (pin.get_io_type() + "_T") in pin_name:
-				startY += 30
+				startY += 10
 
 			hotptX = startX + 30
 			hotptY = startY
 			type_pin = 1
 			position = i + cnt
-			nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
-																_startX=startX,_startY=startY,_type=type_pin))
+			nv.append(create_xml_symbol_pin_scalar(_hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+												   _startX=startX,_startY=startY,_type=type_pin))
 			pp.append(create_xml_pin_number(pin.get_pin(),position))
 
 		cnt = len(self.pin_up) + len(self.pin_down) + len(self.pin_right)
@@ -680,18 +636,18 @@ class Bank():
 			pin_name = pin.get_pin_name()
 			startX = 0
 
-			startY = int((rect_size-len(self.pin_left)*10)/2 + 10*(i+1 - offset))
+			startY = int((rect_size-len(self.pin_left)*10)/2 + 10*(i - offset))
 			if any(spn in pin_name for spn in special_pin_names):
-				startY += 30
+				startY += 10
 			if (pin.get_io_type() + "_T") in pin_name:
-				startY += 30
+				startY += 10
 
 			hotptX = startX - 30
 			hotptY = startY
 			type_pin = 1
 			position = i + cnt
-			nv.append(create_xml_symbol_pin_scalar(   _hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
-																_startX=startX,_startY=startY,_type=type_pin))
+			nv.append(create_xml_symbol_pin_scalar(_hotptX=hotptX,_hotptY=hotptY,_name=pin_name,_position=position,
+												   _startX=startX,_startY=startY,_type=type_pin))
 			pp.append(create_xml_pin_number(pin.get_pin(),position))
 		
 		lp.append(nv)
@@ -910,14 +866,17 @@ def xas_get_bank_objects(file):
 																					  #/2 for P,N
 				byte_lane_in_each_direction = int(num_byte_lane/4)
 				for i in range(0,num_byte_lane):
-					pins = bank.get_byte_lane(i)
 					if i < byte_lane_in_each_direction:
+						pins = bank.get_byte_lane(i, change_diff_order_pin = False)
 						data_bank.add_pin_to_left(pins)
 					elif i< 2*byte_lane_in_each_direction:
+						pins = bank.get_byte_lane(i, change_diff_order_pin = False)
 						data_bank.add_pin_to_down(pins)
 					elif i< 3*byte_lane_in_each_direction:
+						pins = bank.get_byte_lane(i, change_diff_order_pin = True)
 						data_bank.add_pin_to_right(pins)
 					else:
+						pins = bank.get_byte_lane(i, change_diff_order_pin = True)
 						data_bank.add_pin_to_up(pins)
 					
 				all_banks.append(data_bank)
