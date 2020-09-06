@@ -126,7 +126,7 @@ class Bank():
 
 	def set_up_down_left_right_pins(self):
 
-		num_pin_assigned_direction = 0 # the number of pins that assigned them direction
+		num_pin_assigned_direction = 0 # the number of pins that direction assigned them
 
 		if self.type == XAS_DATA_BANK:# Direction for DATA bank is set when read from file
 			num_pin_assigned_direction = len(self.pin_objects) # all pins set directions
@@ -147,7 +147,7 @@ class Bank():
 					self.pin_down.append(pin)
 					num_pin_assigned_direction += 1
 					continue
-
+			
 		#FIXME: for based on bank numbers
 		#right and left pins for HP and HR banks
 		if self.type == XAS_HR_BANK or self.type == XAS_HP_BANK:
@@ -287,13 +287,13 @@ class Bank():
 				end_number = start_number + num_mio_pins
 				for i in range(0, num_mio_pins/2): # /2 for left,right
 					# add differential pins to left
-					d_pin_name = "MIO" + str(start_number + i) # desired pin name
+					d_pin_name = "PS_MIO" + str(start_number + i) # desired pin name
 					l_pin = self.get_desired_pin([d_pin_name], num_bank)
 					l_pin.set_direction(LEFT_DIRECTION)
 					self.pin_left.append(l_pin)
 
 					# add differential pins to right
-					d_pin_name = "MIO" + str(end_number-i-1) # desired pin name
+					d_pin_name = "PS_MIO" + str(end_number-i-1) # desired pin name
 					r_pin = self.get_desired_pin([d_pin_name], num_bank)
 					r_pin.set_direction(RIGHT_DIRECTION)
 					self.pin_right.insert(0, r_pin)
@@ -389,9 +389,9 @@ class Bank():
 				split_pin_name = pin_name.split("_")
 				for s_pin_name in split_pin_name:
 					if "MIO" in s_pin_name:
-						number = int(s_pin_name[3:len(s_pin_name)]) # MIO{0-90-9...}
-						if number < min_number:
-							min_number = number
+						number = s_pin_name[3:len(s_pin_name)] # MIO{0-90-9...}
+						if number.isdigit() and int(number) < min_number:
+							min_number = int(number)
 							break
 		return min_number
 
@@ -427,6 +427,14 @@ class Bank():
 		for pin in self.pin_objects:
 			if any(name in pin.get_pin_name() for name in d_pin_names) and num_bank == pin.get_bank_number():
 				return pin
+
+	# @d_pin_name: list of desired pin names
+	# @return: if find desired pin with d_pin_names return index in pin_objects
+	#		   otherwise return None
+	def get_index_desired_pin(self, d_pin_names):
+		for index,pin in enumerate(self.pin_objects):
+			if any(name in pin.get_pin_name() for name in d_pin_names) and num_bank == pin.get_bank_number():
+				return index		
 
 	# @d_pin_name: list of desired pin names
 	# @num_bank: pin in desired bank number
@@ -754,7 +762,7 @@ def xas_get_bank_objects(file):
 				new_bank.add_bank_number(bank_number)
 				new_bank.add_pin(pin_object)
 				all_banks.append(new_bank)
-			elif io_type == "PSDDR" : #or "DDR" in pin_name
+			elif "DDR"  in io_type : 
 				new_bank = Bank(XAS_DDR_BANK, 1)
 				new_bank.add_bank_number(bank_number)
 				new_bank.add_pin(pin_object)
@@ -764,7 +772,7 @@ def xas_get_bank_objects(file):
 				new_bank.add_bank_number(bank_number)
 				new_bank.add_pin(pin_object)
 				all_banks.append(new_bank)
-			elif "PSGT" in io_type : #or "PS_MGT" in pin_name
+			elif "PSGT" in io_type :
 				is_assign_pin = False
 
 				for bank in all_banks:
@@ -779,7 +787,7 @@ def xas_get_bank_objects(file):
 					new_bank.add_bank_number(bank_number)
 					new_bank.add_pin(pin_object)
 					all_banks.append(new_bank)
-			elif "GT" in io_type  : #or "MGT" in pin_name
+			elif "GT" in io_type  : 
 				is_assign_pin = False
 
 				for bank in all_banks:
@@ -794,7 +802,7 @@ def xas_get_bank_objects(file):
 					new_bank.add_bank_number(bank_number)
 					new_bank.add_pin(pin_object)
 					all_banks.append(new_bank)
-			elif io_type == "PSMIO":# or "PS" in pin_name
+			elif "MIO" in io_type :
 				new_bank = Bank(XAS_PS_BANK, 1)
 				new_bank.add_bank_number(bank_number)
 				new_bank.add_pin(pin_object)
