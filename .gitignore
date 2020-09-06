@@ -1,4 +1,8 @@
-*pkg.txt
-[0-9]*.xml
+*.txt
+!requirements.txt
+*.pyc
+*.xml
+!footer.xml
+!header.xml
 env/
 __pycache__/
