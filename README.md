@@ -1,35 +1,34 @@
 # Xilinx Allegro Symbol Generator
-Converts xilinx package pin out file to orcad library symbols.
+Converts xilinx package pinout file to Orcad library xml files.
 
-You can download package file [here](https://www.xilinx.com/support/package-pinout-files.html)
+You can download package file from [here](https://www.xilinx.com/support/package-pinout-files.html)
 
 ## How To Use
-1. First run below command for installation lxml package
+1. Install lxml package
 
 ```
 pip install lxml
 ```
 
     
-2. Run code with source_file[.xml] and output_file[.txt]
+2. Execute following command to generate xml symbol
 
 ```
-python xml_creator.py [source_file] [output_file]
+python xml_creator.py [input.txt] [output.xml]
 ```
     
 Example: `xml_creator.py xc7z030sbg485pkg.txt result.xml`
 
 ## Parameters
-The code offer following options:
 
 ### vcc_name
-Name of pins that should be place in the vcc_bank.
+Name of pins that should be placed in the vcc_bank.
 
 ### vcc_bank
 The bank id that `vcc_name` should be placed in.
 
 ### mgt_name
-Name of pins that should be place in the mgt_bank.
+Name of pins that should be placed in the mgt_bank.
 
 ### mgt_bank
 The bank id that `mgt_name` should be placed in.
